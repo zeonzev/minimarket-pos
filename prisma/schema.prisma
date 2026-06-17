@@ -1,0 +1,174 @@
+// =====================================================================
+//  Sistema de Gestión para Minimarkets  —  Esquema de base de datos
+//  ORM: Prisma   |   Motor: SQLite (portable a MySQL/InnoDB)
+//  UNIFRANZ - Ingeniería en Sistemas - Gestión 2026
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ----------------------------- Seguridad / RBAC -----------------------------
+
+model Rol {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique // ADMIN, CAJERO, ALMACENERO
+  descripcion String
+  usuarios    Usuario[]
+}
+
+model Usuario {
+  id           Int       @id @default(autoincrement())
+  nombre       String
+  usuario      String    @unique
+  email        String    @unique
+  passwordHash String
+  rolId        Int
+  rol          Rol       @relation(fields: [rolId], references: [id])
+  activo       Boolean   @default(true)
+  ultimoAcceso DateTime?
+  creadoEn     DateTime  @default(now())
+
+  ventas  Venta[]
+  compras Compra[]
+}
+
+// ----------------------------- Catálogo -----------------------------
+
+model Categoria {
+  id          Int        @id @default(autoincrement())
+  nombre      String     @unique
+  descripcion String?
+  productos   Producto[]
+}
+
+model Proveedor {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  nit       String?
+  telefono  String?
+  email     String?
+  direccion String?
+  activo    Boolean  @default(true)
+  compras   Compra[]
+}
+
+model Producto {
+  id           Int      @id @default(autoincrement())
+  codigo       String   @unique // código de barras
+  nombre       String
+  descripcion  String?
+  categoriaId  Int
+  categoria    Categoria @relation(fields: [categoriaId], references: [id])
+  precioCompra Float    @default(0)
+  precioVenta  Float    @default(0)
+  stock        Int      @default(0)
+  stockMinimo  Int      @default(5)
+  unidad       String   @default("UND") // UND, KG, LT, PACK
+  activo       Boolean  @default(true)
+  creadoEn     DateTime @default(now())
+
+  detallesVenta  DetalleVenta[]
+  detallesCompra DetalleCompra[]
+  movimientos    MovimientoInventario[]
+
+  @@index([categoriaId])
+  @@index([nombre])
+}
+
+// ----------------------------- Clientes -----------------------------
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  nit       String?  // CI / NIT
+  telefono  String?
+  email     String?
+  direccion String?
+  creadoEn  DateTime @default(now())
+  ventas    Venta[]
+}
+
+// ----------------------------- Ventas (POS) -----------------------------
+
+model Venta {
+  id            Int      @id @default(autoincrement())
+  numero        String   @unique // V-000001
+  fecha         DateTime @default(now())
+  clienteId     Int?
+  cliente       Cliente? @relation(fields: [clienteId], references: [id])
+  usuarioId     Int
+  usuario       Usuario  @relation(fields: [usuarioId], references: [id])
+  subtotal      Float
+  descuento     Float    @default(0)
+  total         Float
+  metodoPago    String   @default("EFECTIVO") // EFECTIVO, QR, TARJETA
+  montoRecibido Float    @default(0)
+  cambio        Float    @default(0)
+  estado        String   @default("COMPLETADA") // COMPLETADA, ANULADA
+
+  detalles DetalleVenta[]
+
+  @@index([fecha])
+}
+
+model DetalleVenta {
+  id             Int      @id @default(autoincrement())
+  ventaId        Int
+  venta          Venta    @relation(fields: [ventaId], references: [id], onDelete: Cascade)
+  productoId     Int
+  producto       Producto @relation(fields: [productoId], references: [id])
+  cantidad       Int
+  precioUnitario Float
+  subtotal       Float
+}
+
+// ----------------------------- Compras / Abastecimiento -----------------------------
+
+model Compra {
+  id          Int       @id @default(autoincrement())
+  numero      String    @unique // C-000001
+  fecha       DateTime  @default(now())
+  proveedorId Int
+  proveedor   Proveedor @relation(fields: [proveedorId], references: [id])
+  usuarioId   Int
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
+  total       Float
+  estado      String    @default("RECIBIDA") // RECIBIDA, PENDIENTE
+
+  detalles DetalleCompra[]
+
+  @@index([fecha])
+}
+
+model DetalleCompra {
+  id           Int      @id @default(autoincrement())
+  compraId     Int
+  compra       Compra   @relation(fields: [compraId], references: [id], onDelete: Cascade)
+  productoId   Int
+  producto     Producto @relation(fields: [productoId], references: [id])
+  cantidad     Int
+  costoUnitario Float
+  subtotal     Float
+}
+
+// ----------------------------- Kardex / Inventario -----------------------------
+
+model MovimientoInventario {
+  id              Int      @id @default(autoincrement())
+  productoId      Int
+  producto        Producto @relation(fields: [productoId], references: [id])
+  tipo            String   // ENTRADA, SALIDA, AJUSTE
+  cantidad        Int
+  stockResultante Int
+  motivo          String
+  fecha           DateTime @default(now())
+
+  @@index([productoId])
+  @@index([fecha])
+}

@@ -1,0 +1,39 @@
+============================================================
+  COMO EJECUTAR EL SISTEMA EN TU PC
+  Sistema de Gestion para Minimarkets - "El Surtidor"
+============================================================
+
+REQUISITO UNICO: tener Node.js instalado.
+  - Si no lo tienes: descarga la version "LTS" desde https://nodejs.org
+    e instala (siguiente, siguiente, finalizar).
+
+PASOS
+-----
+1) Descomprime esta carpeta (clic derecho -> Extraer todo).
+2) Abre la carpeta extraida.
+3) Doble clic en  ->  INICIAR_SISTEMA.bat
+   * La PRIMERA vez tarda unos minutos: instala y prepara todo solo.
+   * Las siguientes veces abre en segundos.
+4) Se abrira el navegador en:  http://localhost:3000
+5) Inicia sesion con cualquiera de estas cuentas:
+
+     ADMINISTRADOR   usuario: admin     contrasena: admin123
+     CAJERO          usuario: cajero    contrasena: cajero123
+     ALMACENERO      usuario: almacen   contrasena: almacen123
+
+VER LA BASE DE DATOS
+--------------------
+   Doble clic en  ->  VER_BASE_DE_DATOS.bat   (abre en http://localhost:5555)
+
+DETENER EL SISTEMA
+------------------
+   Cierra la ventana negra (la consola).
+
+NOTAS
+-----
+   - No borres la carpeta "prisma" (ahi esta la base de datos).
+   - Si el navegador muestra error al abrir, espera 5 segundos y recarga (F5).
+   - Para reiniciar los datos de ejemplo: abre una consola en la carpeta y
+     ejecuta:  node prisma/seed.mjs
+
+============================================================
